@@ -1,5 +1,5 @@
 DB TABLES
 
 OBJECTS: id, name, path
-SYMBOLS: id, name, type, oid, linenum
-SYM_DEPEND: sid, dependon_sid
+SYMBOLS: id, name, type, oid, linenum, info
+OBJ_DEPEND: oid, dependon_oid
