@@ -3,6 +3,7 @@ import sqlite3
 import sys, os, re
 import popen2
 import linecache
+from collections import deque
 
 
 DBNAME = 'symbol.db'
@@ -128,6 +129,15 @@ class kobject:
     o = kobject()
     (o.oid, o.name, o.path) = t
     return o
+
+  @staticmethod
+  def from_oid(oid):
+    cur = conn.cursor()
+    cur.execute('''SELECT * FROM objects WHERE oid=?''', (oid,))
+    r = cur.fetchone()
+    if not r:
+      return None
+    return kobject.from_tuple(r)
 
   def loadSymbols(self):
     cur = conn.cursor()
@@ -307,23 +317,54 @@ def doIndex(root):
 
 def findDefine(symbolname):
   cur = conn.cursor()
-  cur.execute('''SELECT objects.path, objects.name, symbols.src, symbols.linenum FROM objects, symbols
+  eq = '='
+  cur.execute('''SELECT objects.path, objects.name, symbols.src, symbols.linenum, symbols.name FROM objects, symbols
                   WHERE objects.oid=symbols.oid 
-                  AND symbols.name=? AND (symbols.type=84 OR symbols.type=116);''', (symbolname,))
+                  AND symbols.name LIKE ? AND (symbols.type=84 OR symbols.type=116);''', (symbolname,))
   rs = cur.fetchall()
   if len(rs)==0:
     print 'Definition Not Found:', symbolname
   else:
     for x in rs:
-      print 'SYMBOL:', symbolname
+      print 'SYMBOL:', x[4]
       print 'OBJECT:', os.path.join(x[0], x[1])
       print 'SOURCE:', x[2]+':'+str(x[3])
-      line = linecache.getline(x[2], x[3])
+      line = linecache.getline(x[2], x[3]).strip()
       if line == '':
         print 'Source unavailable'
       else:
         print line
-  
+      print ''
+ 
+def calcFullDependency(modulename):
+  if not modulename.endswith('.o'):
+    modulename += '.o'
+  cur = conn.cursor()
+  cur.execute('''SELECT * FROM objects WHERE name=?''', (modulename,))
+  robj = cur.fetchone()
+  if not robj:
+    print modulename, 'Not Found'
+    return
+  obj = kobject.from_tuple(robj)
+  foundnodes= set()
+  q = deque()
+  q.append(obj.oid)
+  foundnodes.add(obj.oid)
+  print obj
+  while len(q) > 0:
+    n = q.popleft()
+    cur.execute('''SELECT dependon_oid FROM obj_depends WHERE oid=?''', (n,))
+    for x in cur.fetchall():
+      if x[0] in foundnodes:
+        continue
+      foundnodes.add(x[0])
+      q.append(x[0])
+
+  print 'Depend:', len(foundnodes)
+  for x in foundnodes:
+    print '\t',kobject.from_oid(x)
+  #obj.loadSymbols()
+
 
 
 if __name__ == '__main__':
@@ -347,9 +388,14 @@ if __name__ == '__main__':
       x.save()
   elif cmd == 'dump':
     dumpAll()
+  elif cmd == 'depend':
+    if len(sys.argv) < 3 or sys.argv[2]=='':
+      print_usage()
+    else:
+      calcFullDependency(sys.argv[2])
   elif cmd == 'solve':
     solveSymbol()
-  elif cmd == 'def':
+  elif cmd == 'def' or cmd=='deflike':
     if len(sys.argv) < 3 or sys.argv[2]=='':
       print_usage()
     else:
