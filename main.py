@@ -2,6 +2,7 @@
 import sqlite3
 import sys, os, re
 import popen2
+import linecache
 
 
 DBNAME = 'symbol.db'
@@ -22,6 +23,7 @@ class ksymbol:
   linenum = 0
   oid = DUMMY_OID #dummy
   solved = False
+  src = ''
   __P = re.compile('([\s\w]+)\s([a-zA-Z?])\s([\w.]+)\s?(.*)')
   def __str__(self):
     return chr(self.stype) + ' ' +self.name + '\t' + self.info + '\t' + str(self.linenum)
@@ -38,6 +40,7 @@ class ksymbol:
     if len(m.group(4)) != 0:
       try:
         t = m.group(4).split(':')
+        o.src = t[0]
         o.linenum = int(t[1])
       except:
         pass
@@ -48,7 +51,7 @@ class ksymbol:
   @staticmethod
   def from_tuple(t):
     o = ksymbol()
-    (o.sid, o.name, o.stype, o.oid, o.linenum, o.solved, o.info) = t
+    (o.sid, o.name, o.stype, o.oid, o.linenum, o.solved, o.info, o.src) = t
     return o
 
   def is_def(self):
@@ -75,7 +78,7 @@ class ksymbol:
 
       #FIXME
     try:
-      cur.execute('''INSERT INTO symbols VALUES (NULL, ?, ?, ?, ?,?, ?)''',  (self.name, self.stype, self.oid, self.linenum, self.solved, self.info))
+      cur.execute('''INSERT INTO symbols VALUES (NULL, ?, ?, ?, ?,?, ?, ?)''',  (self.name, self.stype, self.oid, self.linenum, self.solved, self.info, self.src))
     except:
       print 'ERROR:', self.name ,'redefined'
 
@@ -149,7 +152,6 @@ class kobject:
     for x in self.syms:
       x.oid = self.oid
       x.save()
-    conn.commit()
     pass
 
   def __str__(self):
@@ -157,8 +159,12 @@ class kobject:
 
 
 def create_db():
-  print 'Creating Schema...'
   cur = conn.cursor()
+  print 'Deleting Old Table...'
+  cur.execute('''DROP TABLE IF EXISTS objects;'''); 
+  cur.execute('''DROP TABLE IF EXISTS symbols;'''); 
+  cur.execute('''DROP TABLE IF EXISTS obj_depends;'''); 
+  print 'Creating Schema...'
 #objects
   cur.execute('''CREATE TABLE objects(
                   oid INTEGER PRIMARY KEY,
@@ -177,6 +183,7 @@ def create_db():
                   linenum INTEGER,
                   solved BOOLEAN,
                   info TEXT,
+                  src  TEXT,
                   CONSTRAINT fk_symbols_objs
                     FOREIGN KEY (oid) REFERENCES objects(oid)
                   );''')
@@ -296,6 +303,27 @@ def doIndex(root):
 #save all objects
   for x in objlist:
     x.save()
+  conn.commit()
+
+def findDefine(symbolname):
+  cur = conn.cursor()
+  cur.execute('''SELECT objects.path, objects.name, symbols.src, symbols.linenum FROM objects, symbols
+                  WHERE objects.oid=symbols.oid 
+                  AND symbols.name=? AND (symbols.type=84 OR symbols.type=116);''', (symbolname,))
+  rs = cur.fetchall()
+  if len(rs)==0:
+    print 'Definition Not Found:', symbolname
+  else:
+    for x in rs:
+      print 'SYMBOL:', symbolname
+      print 'OBJECT:', os.path.join(x[0], x[1])
+      print 'SOURCE:', x[2]+':'+str(x[3])
+      line = linecache.getline(x[2], x[3])
+      if line == '':
+        print 'Source unavailable'
+      else:
+        print line
+  
 
 
 if __name__ == '__main__':
@@ -306,7 +334,7 @@ if __name__ == '__main__':
   if cmd == 'create':
     create_db()
   elif cmd == 'index':
-    objlist = doIndex(os.path.join(KERNEL, 'drivers/base'))
+    objlist = doIndex(os.path.join(KERNEL, 'drivers/'))
   elif cmd == '__test':
     #syms = kobject(os.path.join(KERNEL, 'drivers', 'base', 'core.o'))
     #syms.parseFile()
@@ -321,6 +349,11 @@ if __name__ == '__main__':
     dumpAll()
   elif cmd == 'solve':
     solveSymbol()
+  elif cmd == 'def':
+    if len(sys.argv) < 3 or sys.argv[2]=='':
+      print_usage()
+    else:
+      findDefine(sys.argv[2])
   else:
     print_usage()
   conn.close()
