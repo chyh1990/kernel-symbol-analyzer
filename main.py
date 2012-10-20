@@ -14,11 +14,13 @@ def print_usage():
   print 'Usage: '
 
 class ksymbol:
+  sid = 0
   name = ''
   info = ''
   stype = ord('?')
   linenum = 0
   oid = DUMMY_OID #dummy
+  solved = False
   __P = re.compile('([\s\w]+)\s([a-zA-Z?])\s([\w.]+)\s?(.*)')
   def __str__(self):
     return chr(self.stype) + ' ' +self.name + '\t' + self.info + '\t' + str(self.linenum)
@@ -38,6 +40,14 @@ class ksymbol:
         o.linenum = int(t[1])
       except:
         pass
+    if o.stype != ord('U'):
+      o.solved = True
+    return o
+
+  @staticmethod
+  def from_tuple(t):
+    o = ksymbol()
+    (o.sid, o.name, o.stype, o.oid, o.linenum, o.solved, o.info) = t
     return o
 
   def is_def(self):
@@ -62,25 +72,14 @@ class ksymbol:
       print 'ERROR: define no oid'
       return
 
-    if self.is_def():
-      sid = self.__get_sid()
-      if not (sid == DUMMY_OID or sid == -1):
-        print 'ERROR:', self.name ,'redefined'
-        return 
-      if sid == -1:
-        cur.execute('''INSERT INTO symbols VALUES (NULL, ?, ?, ?, ?, ?)''',  (self.name, self.stype, self.oid, self.linenum, self.info))
-      else:
-        cur.execute('''UPDATE symbols SET oid=? WHERE name=? AND oid=?''', (self.oid, self.name, DUMMY_OID))
-    else:
-      self.oid = DUMMY_OID
-      sid = self.__get_sid()
-      if sid == -1:
-        cur.execute('''INSERT INTO symbols VALUES (NULL, ?, ?, ?, ?, ?)''',  (self.name, self.stype, self.oid, self.linenum, self.info))
-      else:
-        pass
+      #FIXME
+    try:
+      cur.execute('''INSERT INTO symbols VALUES (NULL, ?, ?, ?, ?,?, ?)''',  (self.name, self.stype, self.oid, self.linenum, self.solved, self.info))
+    except:
+      print 'ERROR:', self.name ,'redefined'
 
 class kobject:
-  def __init__(self, path):
+  def __init__(self, path=''):
     (self.path, self.name) = os.path.split(path)
     self.id = 0
     self.syms = []
@@ -119,6 +118,20 @@ class kobject:
     else:
       return 0
 
+  @staticmethod
+  def from_tuple(t):
+    o = kobject()
+    (o.oid, o.name, o.path) = t
+    return o
+
+  def loadSymbols(self):
+    cur = conn.cursor()
+    cur.execute('''SELECT * FROM symbols WHERE oid=?''', (self.oid,))
+    while True:
+      r = cur.fetchone()
+      if not r:break
+      self.syms.append(ksymbol.from_tuple(r))  
+
   def save(self):
     cur = conn.cursor()
     oid = self.__get_oid()
@@ -132,14 +145,13 @@ class kobject:
       self.oid = oid
 
     for x in self.syms:
-      if x.is_def():
-        x.oid = self.oid
+      x.oid = self.oid
       x.save()
     conn.commit()
     pass
 
   def __str__(self):
-    return self.name + ' ' + str(len(self.syms))
+    return os.path.join(self.path, self.name) + ' ' + str(len(self.syms))
 
 
 def create_db():
@@ -161,11 +173,13 @@ def create_db():
                   type INTEGER,
                   oid INTEGER,
                   linenum INTEGER,
+                  solved BOOLEAN,
                   info TEXT,
                   CONSTRAINT fk_symbols_objs
                     FOREIGN KEY (oid) REFERENCES objects(oid)
                   );''')
   cur.execute('''CREATE INDEX name_idx ON symbols(name);''')
+  cur.execute('''CREATE INDEX s_oid_idx ON symbols(oid);''')
   cur.execute('''CREATE UNIQUE INDEX name_oid_UNIQUE ON symbols(name,oid);''')
 
 
@@ -178,9 +192,72 @@ def create_db():
                   CONSTRAINT fk_depends_sym1
                     FOREIGN KEY(dependon_oid) REFERENCES objects(oid)
                     );''');
+  cur.execute('''CREATE INDEX objd_oid_idx ON obj_depends(oid)''')
+  cur.execute('''CREATE UNIQUE INDEX objd_idx_UNQ ON obj_depends(oid, dependon_oid)''')
+  conn.commit()
 
   print 'Filling...'
   print 'DONE'
+
+def solveSymbol():
+  cur = conn.cursor()
+  curw = conn.cursor()
+  cur.execute('''SELECT oid FROM objects''')
+  objs = []
+  robjs = cur.fetchall()
+  for r in robjs:
+    cur1 = conn.cursor()
+    cur1.execute('''SELECT * FROM symbols WHERE oid=? AND type=84''', (r[0],))
+    exportSyms = cur1.fetchall()
+    for x in exportSyms:
+      o = ksymbol.from_tuple(x)
+      cur1.execute('''SELECT oid FROM symbols WHERE name=? AND (type=85 OR type=117)''', (o.name,))
+      while True:
+        r1 = cur1.fetchone()
+        if not r1: break
+        try:
+          curw.execute('''INSERT INTO obj_depends VALUES (?,?)''', (r1[0], r[0]))
+        except sqlite3.IntegrityError:
+          pass
+      curw.execute('''UPDATE symbols SET solved=1 WHERE name=? AND (type=85 OR type=117)''', (o.name,))
+  #unsolvable
+  for r in robjs:
+    cur1.execute('''SELECT * FROM symbols WHERE oid=? AND (type=85 OR type=117) AND solved=0''', (r[0],))
+    if cur1.fetchone():
+      curw.execute('''INSERT INTO obj_depends VALUES (?,?)''', (r[0], DUMMY_OID))
+
+  conn.commit()
+  print 'Done'
+
+def loadAll():
+  cur = conn.cursor()
+  cur.execute('''SELECT * FROM objects''')
+  objs = []
+  while True:
+    r = cur.fetchone()
+    if not r:
+      break
+    objs.append(kobject.from_tuple(r))
+
+  for x in objs:
+    x.loadSymbols()
+  return objs
+
+def dumpAll():
+  objs = loadAll()
+  for x in objs:
+    print x
+    for y in x.syms:
+      print '\t', y
+
+def getObjectFileList(root):
+  objlist = []
+  for root, dirs, files in os.walk(root):
+    if root:
+      for x in files:
+        if x.endswith('.o') and x != 'built-in.o':
+          objlist.append(kobject(os.path.join(root, x)))
+  return objlist
 
 if __name__ == '__main__':
   if len(sys.argv) < 2:
@@ -190,10 +267,19 @@ if __name__ == '__main__':
   if cmd == 'create':
     create_db()
   elif cmd == 'test':
-    syms = kobject(os.path.join(KERNEL, 'drivers', 'base', 'core.o'))
-    syms.parseFile()
-    print syms
-    syms.save()
+    #syms = kobject(os.path.join(KERNEL, 'drivers', 'base', 'core.o'))
+    #syms.parseFile()
+    #print syms
+    #syms.save()
+    objlist = getObjectFileList(os.path.join(KERNEL, 'drivers/base'))
+    for x in objlist:
+      x.parseFile()
+      print x
+      x.save()
+  elif cmd == 'dump':
+    dumpAll()
+  elif cmd == 'solve':
+    solveSymbol()
   else:
     print_usage()
-  pass
+  conn.close()
