@@ -3,6 +3,7 @@ import sqlite3
 import sys, os, re
 import popen2
 
+
 DBNAME = 'symbol.db'
 CROSS_PREFIX = 'arm-linux-'
 KERNEL = '/home/chenyh/os/linux'
@@ -83,6 +84,7 @@ class kobject:
     (self.path, self.name) = os.path.split(path)
     self.id = 0
     self.syms = []
+    self.dependon = []
 
   def parseFile(self):
     nm = CROSS_PREFIX + 'nm'
@@ -241,12 +243,21 @@ def loadAll():
 
   for x in objs:
     x.loadSymbols()
+
+  for x in objs:
+    cur.execute('''SELECT dependon_oid from obj_depends WHERE oid=?''', (x.oid,))
+    for y in cur.fetchall():
+      x.dependon.append(objs[y[0] - DUMMY_OID])
   return objs
 
 def dumpAll():
   objs = loadAll()
   for x in objs:
     print x
+    print 'DEPEND_ON:'
+    for y in x.dependon:
+      print '\t', y
+    print 'SYMS:'
     for y in x.syms:
       print '\t', y
 
@@ -259,6 +270,34 @@ def getObjectFileList(root):
           objlist.append(kobject(os.path.join(root, x)))
   return objlist
 
+from Queue import Queue
+from threading import Thread
+
+indexQueue = Queue()
+def indexWorker():
+  while True:
+    objfile = indexQueue.get()
+    print 'new job:', str(objfile)
+    objfile.parseFile()
+    #objfile.save()
+    indexQueue.task_done() 
+
+def doIndex(root):
+  objlist = getObjectFileList(root)
+  num_worker_threads = 1
+  for i in xrange(num_worker_threads):
+    t = Thread(target=indexWorker)
+    t.daemon = True
+    t.start()
+
+  for x in objlist:
+    indexQueue.put(x)
+  indexQueue.join()
+#save all objects
+  for x in objlist:
+    x.save()
+
+
 if __name__ == '__main__':
   if len(sys.argv) < 2:
     print_usage()
@@ -266,12 +305,14 @@ if __name__ == '__main__':
   cmd = sys.argv[1]
   if cmd == 'create':
     create_db()
-  elif cmd == 'test':
+  elif cmd == 'index':
+    objlist = doIndex(os.path.join(KERNEL, 'drivers/base'))
+  elif cmd == '__test':
     #syms = kobject(os.path.join(KERNEL, 'drivers', 'base', 'core.o'))
     #syms.parseFile()
     #print syms
     #syms.save()
-    objlist = getObjectFileList(os.path.join(KERNEL, 'drivers/base'))
+    objlist = getObjectFileList(os.path.join(KERNEL, 'drivers/'))
     for x in objlist:
       x.parseFile()
       print x
