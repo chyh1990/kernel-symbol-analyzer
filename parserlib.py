@@ -164,3 +164,59 @@ class kobject:
   def __str__(self):
     return os.path.join(self.path, self.name) + ' ' + str(len(self.syms))
 
+
+def loadAll(cur):
+  objs = []
+  while True:
+    r = cur.fetchone()
+    if not r:
+      break
+    objs.append(kobject.from_tuple(r))
+
+  for x in objs:
+    x.loadSymbols()
+
+  for x in objs:
+    cur.execute('''SELECT dependon_oid from obj_depends WHERE oid=?''', (x.oid,))
+    for y in cur.fetchall():
+      x.dependon.append(objs[y[0] - DUMMY_OID])
+  return objs
+
+def dumpModule(name=None):
+  cur = conn.cursor()
+  cur.execute('''SELECT * FROM objects''')
+  objs = loadAll(cur)
+  for x in objs:
+    if name and (x.name.find(name) == -1):
+      continue
+    print x
+    print 'DEPEND_ON:'
+    for y in x.dependon:
+      print '\t', y
+    print 'SYMS:'
+    for y in x.syms:
+      print '\t', y
+
+
+
+def findDefine(symbolname):
+  cur = conn.cursor()
+  eq = '='
+  cur.execute('''SELECT objects.path, objects.name, symbols.src, symbols.linenum, symbols.name FROM objects, symbols
+                  WHERE objects.oid=symbols.oid 
+                  AND symbols.name LIKE ? AND (symbols.type=84 OR symbols.type=116);''', (symbolname,))
+  rs = cur.fetchall()
+  if len(rs)==0:
+    print 'Definition Not Found:', symbolname
+  else:
+    for x in rs:
+      print 'SYMBOL:', x[4]
+      print 'OBJECT:', os.path.join(x[0], x[1])
+      print 'SOURCE:', x[2]+':'+str(x[3])
+      line = linecache.getline(x[2], x[3]).strip()
+      if line == '':
+        print 'Source unavailable'
+      else:
+        print line
+      print ''
+ 
