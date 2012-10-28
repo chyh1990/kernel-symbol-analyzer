@@ -41,8 +41,8 @@ DRIVEROBJ:=char_example.o
 DRIVEROBJ:=$(addprefix $(DRIVERS)/, $(DRIVEROBJ))
 drivers: _drivers.o
 
-_drivers.o: $(DRIVEROBJ)
-	$(LD) -r -o $@ $(DRIVEROBJ)
+_drivers.o: __dummy.o $(DRIVEROBJ)
+	$(LD) -r -o $@ __dummy.o $(DRIVEROBJ)
 
 clean:
-	rm -f $(OBJS) $(SRCDIR)/_module.o $(SRCDIR)/lib$(MOD_NAME).a
+	rm -f $(OBJS) *.o $(DRIVEROBJ) $(SRCDIR)/_module.o $(SRCDIR)/lib$(MOD_NAME).a

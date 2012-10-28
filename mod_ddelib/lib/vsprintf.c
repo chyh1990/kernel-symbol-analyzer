@@ -1569,7 +1569,7 @@ EXPORT_SYMBOL(vscnprintf);
  *
  * See the vsnprintf() documentation for format string extensions over C99.
  */
-int snprintf(char *buf, size_t size, const char *fmt, ...)
+int  __attribute__((weak)) snprintf(char *buf, size_t size, const char *fmt, ...)
 {
 	va_list args;
 	int i;

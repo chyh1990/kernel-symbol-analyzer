@@ -34,7 +34,7 @@
  * @s2: The other string
  * @len: the maximum number of characters to compare
  */
-int strnicmp(const char *s1, const char *s2, size_t len)
+int __attribute__((weak))  strnicmp(const char *s1, const char *s2, size_t len)
 {
 	/* Yes, Virginia, it had better be unsigned */
 	unsigned char c1, c2;
@@ -60,7 +60,7 @@ EXPORT_SYMBOL(strnicmp);
 #endif
 
 #ifndef __HAVE_ARCH_STRCASECMP
-int strcasecmp(const char *s1, const char *s2)
+int __attribute__((weak))  strcasecmp(const char *s1, const char *s2)
 {
 	int c1, c2;
 
@@ -74,7 +74,7 @@ EXPORT_SYMBOL(strcasecmp);
 #endif
 
 #ifndef __HAVE_ARCH_STRNCASECMP
-int strncasecmp(const char *s1, const char *s2, size_t n)
+int __attribute__((weak))  strncasecmp(const char *s1, const char *s2, size_t n)
 {
 	int c1, c2;
 
@@ -94,7 +94,7 @@ EXPORT_SYMBOL(strncasecmp);
  * @src: Where to copy the string from
  */
 #undef strcpy
-char *strcpy(char *dest, const char *src)
+char __attribute__((weak))  *strcpy(char *dest, const char *src)
 {
 	char *tmp = dest;
 
@@ -119,7 +119,7 @@ EXPORT_SYMBOL(strcpy);
  * count, the remainder of @dest will be padded with %NUL.
  *
  */
-char *strncpy(char *dest, const char *src, size_t count)
+char __attribute__((weak))  *strncpy(char *dest, const char *src, size_t count)
 {
 	char *tmp = dest;
 
@@ -146,7 +146,7 @@ EXPORT_SYMBOL(strncpy);
  * of course, the buffer size is zero). It does not pad
  * out the result like strncpy() does.
  */
-size_t strlcpy(char *dest, const char *src, size_t size)
+size_t __attribute__((weak))  strlcpy(char *dest, const char *src, size_t size)
 {
 	size_t ret = strlen(src);
 
@@ -167,7 +167,7 @@ EXPORT_SYMBOL(strlcpy);
  * @src: The string to append to it
  */
 #undef strcat
-char *strcat(char *dest, const char *src)
+char __attribute__((weak))  *strcat(char *dest, const char *src)
 {
 	char *tmp = dest;
 
@@ -190,7 +190,7 @@ EXPORT_SYMBOL(strcat);
  * Note that in contrast to strncpy(), strncat() ensures the result is
  * terminated.
  */
-char *strncat(char *dest, const char *src, size_t count)
+char __attribute__((weak))  *strncat(char *dest, const char *src, size_t count)
 {
 	char *tmp = dest;
 
@@ -216,7 +216,7 @@ EXPORT_SYMBOL(strncat);
  * @src: The string to append to it
  * @count: The size of the destination buffer.
  */
-size_t strlcat(char *dest, const char *src, size_t count)
+size_t __attribute__((weak))  strlcat(char *dest, const char *src, size_t count)
 {
 	size_t dsize = strlen(dest);
 	size_t len = strlen(src);
@@ -243,7 +243,7 @@ EXPORT_SYMBOL(strlcat);
  * @ct: Another string
  */
 #undef strcmp
-int strcmp(const char *cs, const char *ct)
+int __attribute__((weak))  strcmp(const char *cs, const char *ct)
 {
 	unsigned char c1, c2;
 
@@ -267,7 +267,7 @@ EXPORT_SYMBOL(strcmp);
  * @ct: Another string
  * @count: The maximum number of bytes to compare
  */
-int strncmp(const char *cs, const char *ct, size_t count)
+int __attribute__((weak))  strncmp(const char *cs, const char *ct, size_t count)
 {
 	unsigned char c1, c2;
 
@@ -291,7 +291,7 @@ EXPORT_SYMBOL(strncmp);
  * @s: The string to be searched
  * @c: The character to search for
  */
-char *strchr(const char *s, int c)
+char __attribute__((weak))  *strchr(const char *s, int c)
 {
 	for (; *s != (char)c; ++s)
 		if (*s == '\0')
@@ -307,7 +307,7 @@ EXPORT_SYMBOL(strchr);
  * @s: The string to be searched
  * @c: The character to search for
  */
-char *strrchr(const char *s, int c)
+char __attribute__((weak))  *strrchr(const char *s, int c)
 {
        const char *p = s + strlen(s);
        do {
@@ -326,7 +326,7 @@ EXPORT_SYMBOL(strrchr);
  * @count: The number of characters to be searched
  * @c: The character to search for
  */
-char *strnchr(const char *s, size_t count, int c)
+char __attribute__((weak))  *strnchr(const char *s, size_t count, int c)
 {
 	for (; count-- && *s != '\0'; ++s)
 		if (*s == (char)c)
@@ -342,7 +342,7 @@ EXPORT_SYMBOL(strnchr);
  *
  * Returns a pointer to the first non-whitespace character in @str.
  */
-char *skip_spaces(const char *str)
+char __attribute__((weak))  *skip_spaces(const char *str)
 {
 	while (isspace(*str))
 		++str;
@@ -358,7 +358,7 @@ EXPORT_SYMBOL(skip_spaces);
  * in the given string @s. Returns a pointer to the first non-whitespace
  * character in @s.
  */
-char *strim(char *s)
+char __attribute__((weak))  *strim(char *s)
 {
 	size_t size;
 	char *end;
@@ -381,7 +381,7 @@ EXPORT_SYMBOL(strim);
  * strlen - Find the length of a string
  * @s: The string to be sized
  */
-size_t strlen(const char *s)
+size_t __attribute__((weak))  strlen(const char *s)
 {
 	const char *sc;
 
@@ -398,7 +398,7 @@ EXPORT_SYMBOL(strlen);
  * @s: The string to be sized
  * @count: The maximum number of bytes to search
  */
-size_t strnlen(const char *s, size_t count)
+size_t __attribute__((weak))  strnlen(const char *s, size_t count)
 {
 	const char *sc;
 
@@ -415,7 +415,7 @@ EXPORT_SYMBOL(strnlen);
  * @s: The string to be searched
  * @accept: The string to search for
  */
-size_t strspn(const char *s, const char *accept)
+size_t __attribute__((weak))  strspn(const char *s, const char *accept)
 {
 	const char *p;
 	const char *a;
@@ -442,7 +442,7 @@ EXPORT_SYMBOL(strspn);
  * @s: The string to be searched
  * @reject: The string to avoid
  */
-size_t strcspn(const char *s, const char *reject)
+size_t __attribute__((weak))  strcspn(const char *s, const char *reject)
 {
 	const char *p;
 	const char *r;
@@ -466,7 +466,7 @@ EXPORT_SYMBOL(strcspn);
  * @cs: The string to be searched
  * @ct: The characters to search for
  */
-char *strpbrk(const char *cs, const char *ct)
+char __attribute__((weak))  *strpbrk(const char *cs, const char *ct)
 {
 	const char *sc1, *sc2;
 
@@ -493,7 +493,7 @@ EXPORT_SYMBOL(strpbrk);
  * of that name. In fact, it was stolen from glibc2 and de-fancy-fied.
  * Same semantics, slimmer shape. ;)
  */
-char *strsep(char **s, const char *ct)
+char __attribute__((weak))  *strsep(char **s, const char *ct)
 {
 	char *sbegin = *s;
 	char *end;
@@ -546,7 +546,7 @@ EXPORT_SYMBOL(sysfs_streq);
  * Otherwise it will return -EINVAL.  Value pointed to by res is
  * updated upon finding a match.
  */
-int strtobool(const char *s, bool *res)
+int  __attribute__((weak)) strtobool(const char *s, bool *res)
 {
 	switch (s[0]) {
 	case 'y':
@@ -575,7 +575,7 @@ EXPORT_SYMBOL(strtobool);
  *
  * Do not use memset() to access IO space, use memset_io() instead.
  */
-void *memset(void *s, int c, size_t count)
+void __attribute__((weak))  *memset(void *s, int c, size_t count)
 {
 	char *xs = s;
 
@@ -596,7 +596,7 @@ EXPORT_SYMBOL(memset);
  * You should not use this function to access IO space, use memcpy_toio()
  * or memcpy_fromio() instead.
  */
-void *memcpy(void *dest, const void *src, size_t count)
+void __attribute__((weak))  *memcpy(void *dest, const void *src, size_t count)
 {
 	char *tmp = dest;
 	const char *s = src;
@@ -617,7 +617,7 @@ EXPORT_SYMBOL(memcpy);
  *
  * Unlike memcpy(), memmove() copes with overlapping areas.
  */
-void *memmove(void *dest, const void *src, size_t count)
+void __attribute__((weak))  *memmove(void *dest, const void *src, size_t count)
 {
 	char *tmp;
 	const char *s;
@@ -648,7 +648,7 @@ EXPORT_SYMBOL(memmove);
  * @count: The size of the area.
  */
 #undef memcmp
-int memcmp(const void *cs, const void *ct, size_t count)
+int __attribute__((weak))  memcmp(const void *cs, const void *ct, size_t count)
 {
 	const unsigned char *su1, *su2;
 	int res = 0;
@@ -671,7 +671,7 @@ EXPORT_SYMBOL(memcmp);
  * returns the address of the first occurrence of @c, or 1 byte past
  * the area if @c is not found
  */
-void *memscan(void *addr, int c, size_t size)
+void __attribute__((weak))  *memscan(void *addr, int c, size_t size)
 {
 	unsigned char *p = addr;
 
@@ -692,7 +692,7 @@ EXPORT_SYMBOL(memscan);
  * @s1: The string to be searched
  * @s2: The string to search for
  */
-char *strstr(const char *s1, const char *s2)
+char __attribute__((weak))  *strstr(const char *s1, const char *s2)
 {
 	size_t l1, l2;
 
@@ -718,7 +718,7 @@ EXPORT_SYMBOL(strstr);
  * @s2: The string to search for
  * @len: the maximum number of characters to search
  */
-char *strnstr(const char *s1, const char *s2, size_t len)
+char __attribute__((weak))  *strnstr(const char *s1, const char *s2, size_t len)
 {
 	size_t l2;
 
@@ -746,7 +746,7 @@ EXPORT_SYMBOL(strnstr);
  * returns the address of the first occurrence of @c, or %NULL
  * if @c is not found
  */
-void *memchr(const void *s, int c, size_t n)
+void __attribute__((weak))  *memchr(const void *s, int c, size_t n)
 {
 	const unsigned char *p = s;
 	while (n-- != 0) {
@@ -779,7 +779,7 @@ static void *check_bytes8(const u8 *start, u8 value, unsigned int bytes)
  * returns the address of the first character other than @c, or %NULL
  * if the whole buffer contains just @c.
  */
-void *memchr_inv(const void *start, int c, size_t bytes)
+void __attribute__((weak))  *memchr_inv(const void *start, int c, size_t bytes)
 {
 	u8 value = c;
 	u64 value64;

@@ -76,7 +76,10 @@ def genMakefile(modname, parent):
 
 def copyone(name):
   d = os.path.split(name)[0]
-  shutil.makedirs(os.path.join(WORKDIR,d))
+  try:
+    os.makedirs(os.path.join(WORKDIR,d))
+  except:
+    pass
   shutil.copy2(os.path.join(KERNEL, name), os.path.join(WORKDIR, name))
 
 def arch_arm():

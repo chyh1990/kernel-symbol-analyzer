@@ -9,3 +9,5 @@ CSRC+=lib/kobject.c
 CSRC+=lib/string.c
 CSRC+=lib/vsprintf.c
 CSRC+=lib/kstrtox.c
+
+CSRC+=addition/mm_util.c
