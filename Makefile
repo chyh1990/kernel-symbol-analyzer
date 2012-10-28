@@ -41,7 +41,7 @@ DRIVEROBJ:=char_example.o
 DRIVEROBJ:=$(addprefix $(DRIVERS)/, $(DRIVEROBJ))
 drivers: _drivers.o
 
-_drivers.o: __dummy.o $(DRIVEROBJ)
+_drivers.o: __dummy.autogen.c __dummy.o $(DRIVEROBJ)
 	$(LD) -r -o $@ __dummy.o $(DRIVEROBJ)
 
 clean:

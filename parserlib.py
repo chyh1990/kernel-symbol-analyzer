@@ -197,6 +197,22 @@ def dumpModule(name=None):
     for y in x.syms:
       print '\t', y
 
+def getFunctionDef(fn, ln):
+  fileName, fileExtension = os.path.splitext(fn)
+  if fileExtension != '.c':
+    return linecache.getline(fn, ln).strip()
+  line = ''
+  while True:
+    line += linecache.getline(fn, ln).strip()
+    ln += 1
+    if line=='': break 
+    if line.count('(') == line.count(')'):
+      break
+    line += ' '
+
+  line.replace('{','')
+  line.replace('}','')
+  return line.rstrip()
 
 
 def findDefine(symbolname):
@@ -213,7 +229,7 @@ def findDefine(symbolname):
       print 'SYMBOL:', x[4]
       print 'OBJECT:', os.path.join(x[0], x[1])
       print 'SOURCE:', x[2]+':'+str(x[3])
-      line = linecache.getline(x[2], x[3]).strip()
+      line = getFunctionDef(x[2], x[3])
       if line == '':
         print 'Source unavailable'
       else:
