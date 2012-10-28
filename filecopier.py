@@ -50,8 +50,9 @@ def copy34(relp):
   sp = os.path.join(KERNEL, relp)
   copytree(sp, tp)
 
-def genMakefile(parent):
+def genMakefile(modname, parent):
   f = open(os.path.join(WORKDIR, 'Makefile.inc'),'w')
+  f.write('MOD_NAME:= '+modname+'\n\n')
   clist = []
   asmlist = []
   for root, dirs, files in os.walk(parent):
@@ -73,18 +74,26 @@ def genMakefile(parent):
 
   f.close()
 
+def copyone(name):
+  d = os.path.split(name)[0]
+  shutil.makedirs(os.path.join(WORKDIR,d))
+  shutil.copy2(os.path.join(KERNEL, name), os.path.join(WORKDIR, name))
+
 def arch_arm():
   copy34('arch/arm/common')
   copy34('arch/arm/mach-omap2')
   copy34('arch/arm/plat-omap')
   copy34('arch/arm/include')
+  genMakefile('arm', WORKDIR)
 
 def drivers_base():
   copy34('drivers/base')
+  copyone('fs/internal.h')
+  copyone('fs/char_dev.c')
+  genMakefile('base', WORKDIR)
 
 def main():
   drivers_base()
-  genMakefile(WORKDIR)
 
 if __name__ == '__main__':
   main()
