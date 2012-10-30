@@ -1,4 +1,4 @@
-CROSS_COMPILE ?= arm-linux-
+CROSS_COMPILE ?= arm-eabi-
 CC:=$(CROSS_COMPILE)gcc
 LD:=$(CROSS_COMPILE)ld
 AR:=$(CROSS_COMPILE)ar
@@ -15,6 +15,7 @@ CFLAGS+=-D__KERNEL__ -D__KERN__ -D__LINUX_ARM_ARCH__
 CFLAGS+=-include $(KERNEL)/include/linux/kconfig.h
 CFLAGS+=-march=armv7-a
 CFLAGS+=-DDEBUG
+CFLAGS+=-mabi=aapcs-linux
 
 include $(SRCDIR)/Makefile.inc
 MOD_NAME?=unknown
@@ -41,8 +42,10 @@ DRIVEROBJ:=char_example.o
 DRIVEROBJ:=$(addprefix $(DRIVERS)/, $(DRIVEROBJ))
 drivers: _drivers.o
 
-_drivers.o: __dummy.autogen.c __dummy.o $(DRIVEROBJ)
+_drivers.o: __dummy.o $(DRIVEROBJ)
 	$(LD) -r -o $@ __dummy.o $(DRIVEROBJ)
+
+__dummy.o: __dummy.c __dummy.autogen.c
 
 clean:
 	rm -f $(OBJS) *.o $(DRIVEROBJ) $(SRCDIR)/_module.o $(SRCDIR)/lib$(MOD_NAME).a

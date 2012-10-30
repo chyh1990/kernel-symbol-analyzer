@@ -7,9 +7,9 @@
 #include <linux/security.h>
 #include <asm/uaccess.h>
 
-#ifdef kmalloc_track_caller
-#undef kmalloc_track_caller
-#define kmalloc_track_caller kmalloc
+#ifdef kmalloc
+#undef kmalloc
+#define kmalloc kmalloc
 #endif
 
 /**
@@ -17,7 +17,7 @@
  * @s: the string to duplicate
  * @gfp: the GFP mask used in the kmalloc() call when allocating memory
  */
-char *kstrdup(const char *s, gfp_t gfp)
+char  __attribute__((weak)) *kstrdup(const char *s, gfp_t gfp)
 {
 	size_t len;
 	char *buf;
@@ -26,7 +26,7 @@ char *kstrdup(const char *s, gfp_t gfp)
 		return NULL;
 
 	len = strlen(s) + 1;
-	buf = kmalloc_track_caller(len, gfp);
+	buf = kmalloc(len, gfp);
 	if (buf)
 		memcpy(buf, s, len);
 	return buf;
@@ -39,7 +39,7 @@ EXPORT_SYMBOL(kstrdup);
  * @max: read at most @max chars from @s
  * @gfp: the GFP mask used in the kmalloc() call when allocating memory
  */
-char *kstrndup(const char *s, size_t max, gfp_t gfp)
+char  __attribute__((weak)) *kstrndup(const char *s, size_t max, gfp_t gfp)
 {
 	size_t len;
 	char *buf;
@@ -48,7 +48,7 @@ char *kstrndup(const char *s, size_t max, gfp_t gfp)
 		return NULL;
 
 	len = strnlen(s, max);
-	buf = kmalloc_track_caller(len+1, gfp);
+	buf = kmalloc(len+1, gfp);
 	if (buf) {
 		memcpy(buf, s, len);
 		buf[len] = '\0';
@@ -64,11 +64,11 @@ EXPORT_SYMBOL(kstrndup);
  * @len: memory region length
  * @gfp: GFP mask to use
  */
-void *kmemdup(const void *src, size_t len, gfp_t gfp)
+void  __attribute__((weak)) *kmemdup(const void *src, size_t len, gfp_t gfp)
 {
 	void *p;
 
-	p = kmalloc_track_caller(len, gfp);
+	p = kmalloc(len, gfp);
 	if (p)
 		memcpy(p, src, len);
 	return p;
@@ -85,7 +85,7 @@ EXPORT_SYMBOL(kmemdup);
  * allocated buffer. Use this if you don't want to free the buffer immediately
  * like, for example, with RCU.
  */
-void *__krealloc(const void *p, size_t new_size, gfp_t flags)
+void  __attribute__((weak)) *__krealloc(const void *p, size_t new_size, gfp_t flags)
 {
 	void *ret;
 	size_t ks = 0;
@@ -99,7 +99,7 @@ void *__krealloc(const void *p, size_t new_size, gfp_t flags)
 	if (ks >= new_size)
 		return (void *)p;
 
-	ret = kmalloc_track_caller(new_size, flags);
+	ret = kmalloc(new_size, flags);
 	if (ret && p)
 		memcpy(ret, p, ks);
 
@@ -118,7 +118,7 @@ EXPORT_SYMBOL(__krealloc);
  * behaves exactly like kmalloc().  If @size is 0 and @p is not a
  * %NULL pointer, the object pointed to is freed.
  */
-void *krealloc(const void *p, size_t new_size, gfp_t flags)
+void  __attribute__((weak)) *krealloc(const void *p, size_t new_size, gfp_t flags)
 {
 	void *ret;
 
@@ -146,7 +146,7 @@ EXPORT_SYMBOL(krealloc);
  * deal bigger than the requested buffer size passed to kmalloc(). So be
  * careful when using this function in performance sensitive code.
  */
-void kzfree(const void *p)
+void  __attribute__((weak)) kzfree(const void *p)
 {
 	size_t ks;
 	void *mem = (void *)p;
@@ -158,4 +158,16 @@ void kzfree(const void *p)
 	kfree(mem);
 }
 EXPORT_SYMBOL(kzfree);
+
+
+void  __attribute__((weak)) *memchr(const void *s, int c, size_t count)
+{
+	const unsigned char *p = s;
+
+	while (count--)
+		if ((unsigned char)c == *p++)
+			return (void *)(p - 1);
+	return NULL;
+}
+EXPORT_SYMBOL(memchr);
 
