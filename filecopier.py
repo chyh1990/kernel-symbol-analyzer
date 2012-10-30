@@ -93,6 +93,9 @@ def drivers_base():
   copy34('drivers/base')
   copyone('fs/internal.h')
   copyone('fs/char_dev.c')
+  copyone('kernel/resource.c')
+  copyone('kernel/smpboot.h')
+  copyone('kernel/cpu.c')
   genMakefile('base', WORKDIR)
 
 def main():

@@ -28,6 +28,7 @@
 #include <linux/platform_device.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
+#include <linux/kexec.h>
 
 #include <linux/uaccess.h>
 #include <linux/export.h>
@@ -60,3 +61,12 @@ _DDE_WEAK unsigned long __copy_to_user(void *to, const void *from, unsigned long
 struct outer_cache_fns outer_cache __read_mostly;
 EXPORT_SYMBOL(outer_cache);
 #endif
+
+struct device_type part_type = {
+         .name           = "partition",
+};
+
+note_buf_t* crash_notes;
+struct lock_class_key __lockdep_no_validate__;
+struct kset *module_kset;
+

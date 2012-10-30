@@ -148,3 +148,9 @@ char *kstrdup(const char *s, gfp_t gfp)
 EXPORT_SYMBOL(kstrdup);
 
 
+void warn_slowpath_null(const char *file, int line)
+{
+  dde_kit_printf("DDELinux warning: %s:%d, ret %08x\n", file, line, __builtin_return_address(0));   
+}
+EXPORT_SYMBOL(warn_slowpath_null);
+

@@ -16,6 +16,7 @@ CFLAGS+=-include $(KERNEL)/include/linux/kconfig.h
 CFLAGS+=-march=armv7-a
 CFLAGS+=-DDEBUG
 CFLAGS+=-mabi=aapcs-linux
+CFLAGS+=-DKBUILD_MODNAME=\"$(MOD_NAME)\"
 
 include $(SRCDIR)/Makefile.inc
 MOD_NAME?=unknown
@@ -40,10 +41,10 @@ $(SRCDIR)/lib$(MOD_NAME).a: $(OBJS)
 DRIVEROBJ:=char_example.o
 
 DRIVEROBJ:=$(addprefix $(DRIVERS)/, $(DRIVEROBJ))
-drivers: _drivers.o
+drivers: _drivers.o __dummy.o
 
-_drivers.o: __dummy.o $(DRIVEROBJ)
-	$(LD) -r -o $@ __dummy.o $(DRIVEROBJ)
+_drivers.o: $(DRIVEROBJ)
+	$(LD) -r -o $@ $(DRIVEROBJ)
 
 __dummy.o: __dummy.c __dummy.autogen.c
 

@@ -30,3 +30,5 @@ pip-log.txt
 *.db
 
 *.o
+*.swp
+*.a
