@@ -13,7 +13,8 @@ CFLAGS+=-I$(KERNEL)/arch/arm/include/generated
 CFLAGS+=-I$(KERNEL)/arch/arm/include -I$(KERNEL)/include 
 CFLAGS+=-D__KERNEL__ -D__KERN__ -D__LINUX_ARM_ARCH__
 CFLAGS+=-include $(KERNEL)/include/linux/kconfig.h
-CFLAGS+=-march=armv7-a
+#CFLAGS+=-march=armv7-a
+CFLAGS+=-mcpu=cortex-a9
 CFLAGS+=-DDEBUG
 CFLAGS+=-mabi=aapcs-linux
 CFLAGS+=-DKBUILD_MODNAME=\"$(MOD_NAME)\"

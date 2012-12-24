@@ -29,6 +29,7 @@
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/kexec.h>
+#include <linux/irq.h>
 
 #include <linux/uaccess.h>
 #include <linux/export.h>
@@ -69,4 +70,20 @@ struct device_type part_type = {
 note_buf_t* crash_notes;
 struct lock_class_key __lockdep_no_validate__;
 struct kset *module_kset;
+
+///////////
+_DDE_WEAK int autoremove_wake_function(wait_queue_t *wait, unsigned mode, int sync, void *key){TRACE;return 0;}
+_DDE_WEAK int blocking_notifier_chain_unregister(struct blocking_notifier_head *nh,
+		struct notifier_block *n){TRACE;return 0;}
+void module_put(struct module *module){TRACE; return;};
+_DDE_WEAK int blocking_notifier_chain_register(struct blocking_notifier_head *nh,
+		struct notifier_block *n){TRACE;return 0;}
+_DDE_WEAK void finish_wait(wait_queue_head_t *q, wait_queue_t *wait){TRACE;return 0;}
+_DDE_WEAK int bitmap_scnlistprintf(char *buf, unsigned int buflen,
+	const unsigned long *maskp, int nmaskbits){TRACE;return 0;}
+void lockdep_init_map(struct lockdep_map *lock, const char *name,
+		      struct lock_class_key *key, int subclass){TRACE;return;}
+_DDE_WEAK int sysfs_schedule_callback(struct kobject *kobj, void (*func)(void *),
+		void *data, struct module *owner){TRACE;return 0;}
+_DDE_WEAK int get_option (char **str, int *pint){TRACE;return 0;}
 

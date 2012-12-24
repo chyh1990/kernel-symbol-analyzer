@@ -20,6 +20,8 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 
+#include <asm/mach/arch.h>
+
 #ifdef DEBUG
 #define _TODO_() printk(KERN_ALERT "TODO %s\n", __func__)
 #else 
@@ -63,6 +65,32 @@ static void do_initcalls()
   pr_debug("do_initcalls() end!\n");
 }
 
+
+extern struct machine_desc __arch_info_begin[], __arch_info_end[];
+
+static void dde_call_machine_init_early()
+{
+  struct machine_desc *desc = &__arch_info_begin[0];
+  if(__arch_info_end <= __arch_info_begin)
+    return;
+  printk("Init map_io: %s\n", desc->name);
+  if(__arch_info_begin[0].map_io){
+    __arch_info_begin[0].map_io();
+  }
+}
+
+static void __dde_call_machine_init()
+{
+  struct machine_desc *desc = &__arch_info_begin[0];
+  if(__arch_info_end <= __arch_info_begin)
+    return;
+  printk("Init Machine: %s\n", desc->name);
+  if(__arch_info_begin[0].init_machine){
+    __arch_info_begin[0].init_machine();
+  }
+}
+
+
 /*
 int request_module(const char *fmt, ...)
 {
@@ -85,6 +113,7 @@ void dde_kit_subsys_linux_init(void)
   chrdev_init();
   driver_init(); 
 
+  __dde_call_machine_init();
   do_initcalls();
 }
 

@@ -99,7 +99,8 @@ def drivers_base():
   genMakefile('base', WORKDIR)
 
 def main():
-  drivers_base()
+#  drivers_base()
+  arch_arm()
 
 if __name__ == '__main__':
   main()

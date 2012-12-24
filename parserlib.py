@@ -4,7 +4,7 @@ import popen2
 import linecache
 from collections import deque
 
-CROSS_PREFIX = 'arm-linux-'
+CROSS_PREFIX = 'arm-eabi-'
 KERNEL = '/home/chenyh/os/linux'
 DUMMY_OID = 1
 DBNAME = 'symbol.db'
